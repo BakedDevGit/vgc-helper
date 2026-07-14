@@ -29,7 +29,7 @@ Each release:
    ```
    $env:GH_TOKEN="<your token>"; npm run release
    ```
-   This builds the NSIS installer and uploads it + `latest.yml` to a **draft** GitHub Release. Open the release on GitHub and click **Publish**.
+   This builds the NSIS installer and creates a **published** GitHub Release (tag `v<version>`) with the installer + `latest.yml` attached. No manual publish step. (`releaseType: release` in `build.publish` — using a real release, not a draft, also avoids a race that can split assets across two drafts.)
 
 How it updates: users install `VGC-Helper-Setup-<version>.exe` once. On every launch the app checks the GitHub feed; a new version downloads in the background and the in-app banner offers **Restart & install**. (Windows may show a SmartScreen prompt since the build is unsigned — "More info → Run anyway".)
 

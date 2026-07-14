@@ -53,7 +53,8 @@
       {
         "provider": "github",
         "owner": "BakedDevGit",
-        "repo": "vgc-helper"
+        "repo": "vgc-helper",
+        "releaseType": "release"
       }
     ]
   },
