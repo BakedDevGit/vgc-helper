@@ -1,6 +1,6 @@
 import { Dex } from '@pkmn/dex'
 import { newMeta, correctItemStats, type MetaEntry, type MetaMap, type UsageStat } from './meta'
-import { isElectron, apiFetchJson, apiFetchText } from './platform'
+import { isElectron, isNativeApp, apiFetchJson, apiFetchText } from './platform'
 
 // Champions Battle Data API — https://championsbattledata.com/api_guide
 // The `/api` index lists every Pokémon with a per-format CSV path. The CSVs hold
@@ -21,7 +21,10 @@ const PROXY_PREFIX = '/cbd'
 export type BattleFormat = 'Doubles' | 'Singles'
 
 // Web data strategy, resolved once on the first index load.
-let webMode: 'proxy' | 'direct' | null = null
+//   native = Capacitor app (CapacitorHttp bypasses CORS → read CSVs from API_BASE)
+//   proxy  = same-origin /cbd proxy serves the CSVs
+//   direct = plain browser, no proxy → CORS JSON endpoint (base species only)
+let webMode: 'proxy' | 'direct' | 'native' | null = null
 
 interface BattleRow {
   category: string
@@ -70,7 +73,9 @@ let _index: IndexEntry[] | null = null
 export async function loadIndex(force = false): Promise<IndexEntry[]> {
   if (_index && !force) return _index
   let data: { pokemon?: IndexEntry[] }
-  if (isElectron()) {
+  if (isElectron() || isNativeApp()) {
+    // Native HTTP (Electron main / CapacitorHttp) bypasses CORS → read CSVs directly.
+    if (isNativeApp()) webMode = 'native'
     data = (await apiFetchJson(`${API_BASE}/api`)) as { pokemon?: IndexEntry[] }
   } else {
     // Web: prefer a same-origin proxy (full per-forme CSVs). Probe it via the

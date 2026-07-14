@@ -6,11 +6,18 @@
 // Every component talks to this module instead of `window.api` directly, so the
 // exact same React code ships to both targets.
 
+import { Capacitor } from '@capacitor/core'
+
 type ElectronApi = Window['api']
 const electron = (): ElectronApi | undefined =>
   (globalThis as unknown as { api?: ElectronApi }).api
 
 export const isElectron = (): boolean => !!electron()
+
+// True inside the native Android app (Capacitor). There, CapacitorHttp routes
+// fetch() through native code, so cross-origin requests bypass CORS (like the
+// Electron main process) — letting us read the per-forme CSVs directly.
+export const isNativeApp = (): boolean => Capacitor.isNativePlatform()
 
 // --- auto-update (Electron desktop only; on web the PWA service worker updates) -
 export interface UpdateStatus {
