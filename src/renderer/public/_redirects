@@ -1,0 +1,6 @@
+# Same-origin proxy to the Champions Battle Data API so the web app can read the
+# per-forme CSV files (which the origin serves without CORS headers). Netlify and
+# Cloudflare Pages honor this file; the app falls back to the CORS JSON endpoint
+# on hosts that don't (base species only). The status 200 makes it a rewrite/proxy
+# rather than a client redirect.
+/cbd/*  https://championsbattledata.com/:splat  200

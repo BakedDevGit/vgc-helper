@@ -1,0 +1,11 @@
+node_modules/
+out/
+dist/
+dist-web/
+android/
+*.tsbuildinfo
+dev.log
+*.log
+.DS_Store
+.env
+.env.*
