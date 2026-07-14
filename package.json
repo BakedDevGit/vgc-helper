@@ -52,7 +52,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "YOUR_GITHUB_USERNAME",
+        "owner": "BakedDevGit",
         "repo": "vgc-helper"
       }
     ]
