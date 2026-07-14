@@ -142,6 +142,13 @@ export interface MoveData {
   priority: number
   desc: string
 }
+// Champions-specific move corrections (mechanics that differ from standard gen 9
+// and aren't in the Showdown data). Keyed by move name.
+const CHAMPIONS_MOVE_OVERRIDES: Record<string, Partial<MoveData>> = {
+  // Champions raised Make It Rain's self Sp. Atk drop from 1 stage to 2.
+  'Make It Rain': { desc: "Lowers the user's Sp. Atk by 2. Hits foe(s)." }
+}
+
 let _moveData: MoveData[] | null = null
 export function listMoveData(): MoveData[] {
   if (_moveData) return _moveData
@@ -156,7 +163,8 @@ export function listMoveData(): MoveData[] {
       accuracy: m.accuracy === true ? 0 : m.accuracy,
       pp: m.pp,
       priority: m.priority,
-      desc: m.shortDesc || m.desc || ''
+      desc: m.shortDesc || m.desc || '',
+      ...CHAMPIONS_MOVE_OVERRIDES[m.name]
     })
   }
   out.sort((a, b) => a.name.localeCompare(b.name))
