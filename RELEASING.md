@@ -18,18 +18,34 @@ One-time setup:
 2. Create a GitHub repo named `vgc-helper`, then:
    ```
    git remote add origin https://github.com/<you>/vgc-helper.git
-   git push -u origin master
+   git push -u origin main
    ```
-3. Create a GitHub Personal Access Token (classic) with the `repo` scope.
+3. Install the [GitHub CLI](https://cli.github.com/) and run `gh auth login` (used to publish releases reliably — see below). A classic Personal Access Token with `repo` scope also works if you prefer.
 
-Each release:
+Each release — **build locally, then upload** (electron-builder's own `--publish`
+races on release creation and splits/loses assets, so don't use it):
 
 1. Bump `version` in `package.json` (e.g. `0.1.0` → `0.1.1`). The updater compares this.
-2. Publish (PowerShell):
+2. Build the installer + update metadata locally:
    ```
-   $env:GH_TOKEN="<your token>"; npm run release
+   npm run package
    ```
-   This builds the NSIS installer and creates a **published** GitHub Release (tag `v<version>`) with the installer + `latest.yml` attached. No manual publish step. (`releaseType: release` in `build.publish` — using a real release, not a draft, also avoids a race that can split assets across two drafts.)
+   This produces a **matching set** in `dist\`: `VGC-Helper-Setup-<version>.exe`,
+   `VGC-Helper-Setup-<version>.exe.blockmap`, and `latest.yml` (its sha512/size must
+   match the exe — that's why you build them together, never mix from separate builds).
+3. Publish the release, either way:
+   - **GitHub CLI (recommended, reliable):**
+     ```
+     gh release create v<version> `
+       "dist/VGC-Helper-Setup-<version>.exe" `
+       "dist/VGC-Helper-Setup-<version>.exe.blockmap" `
+       "dist/latest.yml" -t "<version>" -n "Release <version>"
+     ```
+   - **Or web UI:** Releases → Draft a new release → tag `v<version>` → drag those
+     **three** files in → Publish.
+
+Verify afterward that the release has all three assets and that
+`.../releases/latest/download/latest.yml` resolves.
 
 How it updates: users install `VGC-Helper-Setup-<version>.exe` once. On every launch the app checks the GitHub feed; a new version downloads in the background and the in-app banner offers **Restart & install**. (Windows may show a SmartScreen prompt since the build is unsigned — "More info → Run anyway".)
 
