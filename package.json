@@ -10,7 +10,7 @@
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "start": "electron-vite preview",
-    "package": "electron-vite build && electron-builder --win nsis",
+    "package": "electron-vite build && electron-builder --win nsis portable",
     "release": "electron-vite build && electron-builder --win nsis --publish always",
     "icons": "node scripts/gen-pwa-icons.mjs",
     "build:web": "vite build --config vite.config.web.ts",
@@ -34,7 +34,10 @@
       "package.json"
     ],
     "win": {
-      "target": "nsis",
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "build/icon.png"
     },
     "nsis": {
@@ -42,6 +45,9 @@
       "perMachine": false,
       "allowToChangeInstallationDirectory": true,
       "artifactName": "VGC-Helper-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "VGC-Helper.exe"
     },
     "publish": [
       {

@@ -141,13 +141,28 @@ ipcMain.handle('file:openText', async (_evt, args?: { extensions?: string[] }) =
   return readFile(filePaths[0], 'utf-8')
 })
 
-app.whenReady().then(() => {
-  createWindow()
-
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+// Single-instance lock: a second launch focuses the existing window instead of
+// spinning up a rival process that fights over the userData/cache folder (which
+// causes "cache access denied" errors and flaky behavior).
+if (!app.requestSingleInstanceLock()) {
+  app.quit()
+} else {
+  app.on('second-instance', () => {
+    const win = BrowserWindow.getAllWindows()[0]
+    if (win) {
+      if (win.isMinimized()) win.restore()
+      win.focus()
+    }
   })
-})
+
+  app.whenReady().then(() => {
+    createWindow()
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    })
+  })
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
