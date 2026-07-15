@@ -1,5 +1,6 @@
 import { Dex } from '@pkmn/dex'
 import { Generations, type Generation } from '@pkmn/data'
+import { getMoveOverrides, getLearnsetAdditions, overridesVersion } from './championsData'
 
 // Single shared Gen 9 generation used for browsing species/moves/items/abilities.
 const generations = new Generations(Dex)
@@ -142,17 +143,12 @@ export interface MoveData {
   priority: number
   desc: string
 }
-// Champions-specific move corrections (mechanics that differ from standard gen 9
-// and aren't in the Showdown data). Keyed by move name.
-const CHAMPIONS_MOVE_OVERRIDES: Record<string, Partial<MoveData>> = {
-  // Champions raised Make It Rain's self Sp. Atk drop from 1→2 and dropped its
-  // accuracy from 100 to 95.
-  'Make It Rain': { accuracy: 95, desc: "Lowers the user's Sp. Atk by 2. Hits foe(s)." }
-}
-
 let _moveData: MoveData[] | null = null
+let _moveDataVersion = -1
 export function listMoveData(): MoveData[] {
-  if (_moveData) return _moveData
+  // Recompute when the live Champions overrides change (see championsData).
+  if (_moveData && _moveDataVersion === overridesVersion()) return _moveData
+  const overrides = getMoveOverrides()
   const out: MoveData[] = []
   for (const m of gen.moves) {
     if (m.isNonstandard) continue
@@ -165,11 +161,12 @@ export function listMoveData(): MoveData[] {
       pp: m.pp,
       priority: m.priority,
       desc: m.shortDesc || m.desc || '',
-      ...CHAMPIONS_MOVE_OVERRIDES[m.name]
+      ...overrides[m.name]
     })
   }
   out.sort((a, b) => a.name.localeCompare(b.name))
   _moveData = out
+  _moveDataVersion = overridesVersion()
   return out
 }
 
@@ -185,12 +182,6 @@ export function listItemData(): ItemData[] {
     desc: (Dex.items.get(name).desc as string) || ''
   }))
   return _itemData
-}
-
-// Champions-specific learnset additions (moves a species learns in Champions but
-// not in the standard gen-9 data). Keyed by species name → move names.
-const CHAMPIONS_LEARNSET_ADDITIONS: Record<string, string[]> = {
-  Swampert: ['Wave Crash']
 }
 
 // Move NAMES learnable by a species (walks up the prevo / base-forme chain).
@@ -213,8 +204,9 @@ export async function learnableMoves(speciesName: string): Promise<Set<string>> 
     cur = sp.prevo || (sp.baseSpecies !== sp.name ? sp.baseSpecies : undefined)
   }
   // Champions additions for the species and anything in its prevo/base chain.
+  const additions = getLearnsetAdditions()
   for (const name of seen) {
-    for (const mvName of CHAMPIONS_LEARNSET_ADDITIONS[name] ?? []) {
+    for (const mvName of additions[name] ?? []) {
       const mv = gen.moves.get(mvName)
       if (mv?.exists) out.add(mv.name)
     }

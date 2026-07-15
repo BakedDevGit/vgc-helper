@@ -12,6 +12,7 @@ import { newSet, type PokeSet } from '../data/champions'
 import { type MetaEntry, type MetaMap, setUserItemFixes } from '../data/meta'
 import { listSpecies, listItems } from '../data/gen'
 import { loadState, saveState } from '../data/platform'
+import { refreshChampionsOverrides, onOverridesChanged } from '../data/championsData'
 
 export interface LegalFormat {
   id: string
@@ -42,6 +43,7 @@ interface AppState {
 
 interface Ctx {
   ready: boolean
+  dataVersion: number // bumps when live Champions overrides change
   team: PokeSet[]
   benchmarks: PokeSet[]
   meta: MetaMap
@@ -83,7 +85,16 @@ export function StoreProvider({ children }: { children: ReactNode }): JSX.Elemen
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([])
   const [itemFixes, setItemFixes] = useState<Record<string, string>>({})
   const [ready, setReady] = useState(false)
+  const [dataVersion, setDataVersion] = useState(0)
   const loaded = useRef(false)
+
+  // Fetch live Champions data corrections once on startup; re-render consumers if
+  // they changed (built-in/cached values already applied synchronously).
+  useEffect(() => {
+    const off = onOverridesChanged(() => setDataVersion((v) => v + 1))
+    void refreshChampionsOverrides()
+    return off
+  }, [])
 
   useEffect(() => {
     const init = (s: Partial<AppState>): void => {
@@ -250,6 +261,7 @@ export function StoreProvider({ children }: { children: ReactNode }): JSX.Elemen
     <StoreContext.Provider
       value={{
         ready,
+        dataVersion,
         team,
         benchmarks,
         meta,

@@ -1,0 +1,9 @@
+{
+  "_comment": "Live Champions data corrections. Edit this file on GitHub (web UI or a commit) and every app — desktop, web, Android — picks it up on next launch. No rebuild needed. moveOverrides: patch a move's accuracy/power/type/category/pp/priority/desc by name. learnsetAdditions: give a species extra learnable moves.",
+  "moveOverrides": {
+    "Make It Rain": { "accuracy": 95, "desc": "Lowers the user's Sp. Atk by 2. Hits foe(s)." }
+  },
+  "learnsetAdditions": {
+    "Swampert": ["Wave Crash"]
+  }
+}

@@ -9,7 +9,7 @@ import {
 } from '../data/gen'
 import { computeStats, type PokeSet } from '../data/champions'
 import { spriteStyle, itemSpriteStyle } from '../data/sprites'
-import { useLegalSpeciesNames, useLegalItems } from '../state/store'
+import { useLegalSpeciesNames, useLegalItems, useStore } from '../state/store'
 import SearchSelect from './SearchSelect'
 import PointsEditor from './PointsEditor'
 
@@ -25,6 +25,7 @@ interface Props {
 export default function PokeSetEditor({ set, onChange, onRemove, title }: Props): JSX.Element {
   const speciesNames = useLegalSpeciesNames()
   const items = useLegalItems()
+  const { dataVersion } = useStore()
   const allMoves = useMemo(() => listMoves(), [])
 
   // Only offer moves the species can learn (async; show all until it loads).
@@ -41,7 +42,7 @@ export default function PokeSetEditor({ set, onChange, onRemove, title }: Props)
     return () => {
       cancelled = true
     }
-  }, [set.species])
+  }, [set.species, dataVersion])
   const moves = useMemo(
     () => (learnable && learnable.size ? allMoves.filter((m) => learnable.has(m)) : allMoves),
     [allMoves, learnable]

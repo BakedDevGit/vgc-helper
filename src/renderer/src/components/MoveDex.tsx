@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { listMoveData, type MoveData } from '../data/gen'
+import { useStore } from '../state/store'
 
 type SortKey = 'name' | 'type' | 'category' | 'power' | 'accuracy' | 'pp'
 
@@ -13,7 +14,8 @@ const COLUMNS: { key: SortKey; label: string }[] = [
 ]
 
 export default function MoveDex(): JSX.Element {
-  const all = useMemo(() => listMoveData(), [])
+  const { dataVersion } = useStore()
+  const all = useMemo(() => listMoveData(), [dataVersion])
   const [q, setQ] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [sortDir, setSortDir] = useState<1 | -1>(1)
