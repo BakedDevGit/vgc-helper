@@ -1417,3 +1417,53 @@ input[type='range'] {
 .gp-matchup-notes {
   margin-top: 10px;
 }
+
+/* --- Gameplan: opponent scout + prediction --- */
+.gp-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #26304c;
+}
+.gp-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.gp-add-opp {
+  min-width: 200px;
+}
+.gp-hint {
+  margin: 4px 0 0;
+  font-size: 13px;
+}
+.gp-predict-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.gp-mon {
+  position: relative;
+}
+.gp-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 2;
+  width: 18px;
+  height: 18px;
+  line-height: 1;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #3a2530;
+  background: #26161d;
+  color: #d98a9a;
+  font-size: 11px;
+  cursor: pointer;
+}
+.gp-remove:hover {
+  background: #3a2530;
+}

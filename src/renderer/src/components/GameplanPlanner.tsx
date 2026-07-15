@@ -1,18 +1,70 @@
-import { useStore, type Matchup } from '../state/store'
+import { useStore, useLegalSpeciesNames, type Matchup } from '../state/store'
 import { spriteStyle } from '../data/sprites'
+import { predictMatchup, type Role } from '../data/predict'
+import SearchSelect from './SearchSelect'
 
 const genId = (): string => Math.random().toString(36).slice(2, 10)
 
+type Picks = Record<string, Role>
+
+// Add/remove a key from the 4 brought (removing also clears its lead).
+function toggleBringMap(picks: Picks, key: string): Picks {
+  const p = { ...picks }
+  if (p[key]) delete p[key]
+  else if (Object.keys(p).length < 4) p[key] = 'bring'
+  return p
+}
+// Toggle a brought key as one of the 2 leads.
+function toggleLeadMap(picks: Picks, key: string): Picks {
+  if (!picks[key]) return picks
+  const p = { ...picks }
+  const leads = Object.values(p).filter((v) => v === 'lead').length
+  if (p[key] === 'lead') p[key] = 'bring'
+  else if (leads < 2) p[key] = 'lead'
+  return p
+}
+
+function PickChip({
+  species,
+  role,
+  onBring,
+  onLead,
+  onRemove
+}: {
+  species: string
+  role?: Role
+  onBring: () => void
+  onLead: () => void
+  onRemove?: () => void
+}): JSX.Element {
+  return (
+    <div className={role ? 'gp-mon picked' : 'gp-mon'}>
+      {onRemove && (
+        <button className="gp-remove" onClick={onRemove} title="Remove from scout">
+          ✕
+        </button>
+      )}
+      <button className="gp-mon-btn" onClick={onBring} title="Toggle bring">
+        <span className="sprite" style={spriteStyle(species)} />
+        <span className="gp-mon-name">{species}</span>
+      </button>
+      {role && (
+        <button
+          className={role === 'lead' ? 'gp-lead on' : 'gp-lead'}
+          onClick={onLead}
+          title="Toggle lead"
+        >
+          {role === 'lead' ? '★ Lead' : '☆ Lead'}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function GameplanPlanner(): JSX.Element {
   const { team, gameplan, setGameplan } = useStore()
+  const speciesNames = useLegalSpeciesNames()
   const members = team.filter((s) => s.species)
-
-  // Functional updates so rapid clicks (before a re-render) accumulate correctly.
-  const patchMatchup = (id: string, patch: Partial<Matchup>): void =>
-    setGameplan((gp) => ({
-      ...gp,
-      matchups: gp.matchups.map((m) => (m.id === id ? { ...m, ...patch } : m))
-    }))
 
   const mapMatchup = (id: string, fn: (m: Matchup) => Matchup): void =>
     setGameplan((gp) => ({
@@ -23,38 +75,41 @@ export default function GameplanPlanner(): JSX.Element {
   const addMatchup = (): void =>
     setGameplan((gp) => ({
       ...gp,
-      matchups: [...gp.matchups, { id: genId(), label: '', picks: {}, notes: '' }]
+      matchups: [
+        ...gp.matchups,
+        { id: genId(), label: '', opponents: [], oppPicks: {}, picks: {}, notes: '' }
+      ]
     }))
 
   const removeMatchup = (id: string): void =>
     setGameplan((gp) => ({ ...gp, matchups: gp.matchups.filter((m) => m.id !== id) }))
 
-  // Click a mon to add/remove it from the 4 brought. Removing also clears its lead.
-  const toggleBring = (matchupId: string, memberId: string): void =>
-    mapMatchup(matchupId, (m) => {
-      const picks = { ...m.picks }
-      if (picks[memberId]) delete picks[memberId]
-      else if (Object.keys(picks).length < 4) picks[memberId] = 'bring'
-      return { ...m, picks }
+  const addOpponent = (id: string, sp: string): void =>
+    mapMatchup(id, (m) => {
+      const opps = m.opponents ?? []
+      if (!sp || opps.includes(sp) || opps.length >= 6) return m
+      return { ...m, opponents: [...opps, sp] }
     })
 
-  // Toggle a brought mon as one of the 2 leads.
-  const toggleLead = (matchupId: string, memberId: string): void =>
-    mapMatchup(matchupId, (m) => {
-      if (!m.picks[memberId]) return m
-      const picks = { ...m.picks }
-      const leadCount = Object.values(picks).filter((v) => v === 'lead').length
-      if (picks[memberId] === 'lead') picks[memberId] = 'bring'
-      else if (leadCount < 2) picks[memberId] = 'lead'
-      return { ...m, picks }
+  const removeOpponent = (id: string, sp: string): void =>
+    mapMatchup(id, (m) => {
+      const oppPicks = { ...(m.oppPicks ?? {}) }
+      delete oppPicks[sp]
+      return { ...m, opponents: (m.opponents ?? []).filter((o) => o !== sp), oppPicks }
+    })
+
+  const predict = (id: string): void =>
+    mapMatchup(id, (m) => {
+      const { oppPicks, userPicks } = predictMatchup(team, m.opponents ?? [])
+      return { ...m, oppPicks, picks: userPicks }
     })
 
   return (
     <div className="panel full">
       <h2>Gameplan</h2>
       <p className="subtle">
-        Plan Team Preview brings and leads for your current team against common threats and
-        archetypes. Tied to the team in the Teambuilder — saved automatically.
+        Plan Team Preview for your current team. Scout an opponent, predict their likely brings and
+        leads, and auto-fill a suggested counter you can refine. Saved automatically.
       </p>
 
       {members.length === 0 ? (
@@ -82,8 +137,10 @@ export default function GameplanPlanner(): JSX.Element {
 
           <div className="gp-matchups">
             {gameplan.matchups.map((m) => {
-              const bring = Object.keys(m.picks).length
-              const leads = members.filter((s) => m.picks[s.id] === 'lead')
+              const opponents = m.opponents ?? []
+              const oppPicks = m.oppPicks ?? {}
+              const myLeads = members.filter((s) => m.picks[s.id] === 'lead')
+              const theirBring = opponents.filter((o) => oppPicks[o])
               return (
                 <div key={m.id} className="gp-card">
                   <div className="gp-card-head">
@@ -91,53 +148,110 @@ export default function GameplanPlanner(): JSX.Element {
                       className="gp-label"
                       placeholder="vs … (e.g. Trick Room, Miraidon, Rain)"
                       value={m.label}
-                      onChange={(e) => patchMatchup(m.id, { label: e.target.value })}
+                      onChange={(e) => mapMatchup(m.id, (x) => ({ ...x, label: e.target.value }))}
                     />
-                    <span className="gp-counts subtle">
-                      Bring {bring}/4 · Leads {leads.length}/2
-                    </span>
                     <button className="gp-del" onClick={() => removeMatchup(m.id)} title="Remove">
                       ✕
                     </button>
                   </div>
 
-                  <div className="gp-mons">
-                    {members.map((s) => {
-                      const role = m.picks[s.id]
-                      return (
-                        <div
-                          key={s.id}
-                          className={role ? 'gp-mon picked' : 'gp-mon'}
-                        >
-                          <button className="gp-mon-btn" onClick={() => toggleBring(m.id, s.id)}>
-                            <span className="sprite" style={spriteStyle(s.species)} />
-                            <span className="gp-mon-name">{s.species}</span>
+                  {/* Opponent side */}
+                  <div className="gp-section">
+                    <div className="gp-section-head">
+                      <span className="meta-sub">
+                        Opponent&apos;s team {opponents.length > 0 && `(${opponents.length}/6)`}
+                      </span>
+                      {opponents.length < 6 && (
+                        <div className="gp-add-opp">
+                          <SearchSelect
+                            value=""
+                            onChange={(v) => addOpponent(m.id, v)}
+                            options={speciesNames}
+                            placeholder="+ scout a Pokémon…"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {opponents.length === 0 ? (
+                      <p className="subtle gp-hint">
+                        Add the opponent&apos;s Pokémon to predict their picks.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="gp-mons">
+                          {opponents.map((o) => (
+                            <PickChip
+                              key={o}
+                              species={o}
+                              role={oppPicks[o]}
+                              onBring={() =>
+                                mapMatchup(m.id, (x) => ({
+                                  ...x,
+                                  oppPicks: toggleBringMap(x.oppPicks ?? {}, o)
+                                }))
+                              }
+                              onLead={() =>
+                                mapMatchup(m.id, (x) => ({
+                                  ...x,
+                                  oppPicks: toggleLeadMap(x.oppPicks ?? {}, o)
+                                }))
+                              }
+                              onRemove={() => removeOpponent(m.id, o)}
+                            />
+                          ))}
+                        </div>
+                        <div className="gp-predict-row">
+                          <button className="add-btn" onClick={() => predict(m.id)}>
+                            Predict their picks &amp; my counter
                           </button>
-                          {role && (
-                            <button
-                              className={role === 'lead' ? 'gp-lead on' : 'gp-lead'}
-                              onClick={() => toggleLead(m.id, s.id)}
-                              title="Toggle lead"
-                            >
-                              {role === 'lead' ? '★ Lead' : '☆ Lead'}
-                            </button>
+                          {theirBring.length > 0 && (
+                            <span className="subtle">
+                              Predicted bring: {theirBring.join(', ')}
+                            </span>
                           )}
                         </div>
-                      )
-                    })}
+                      </>
+                    )}
                   </div>
 
-                  {leads.length > 0 && (
-                    <div className="gp-lead-summary subtle">
-                      Leads: {leads.map((s) => s.species).join(' + ')}
+                  {/* Your side */}
+                  <div className="gp-section">
+                    <span className="meta-sub">
+                      Your response — Bring {Object.keys(m.picks).length}/4 · Leads {myLeads.length}/2
+                    </span>
+                    <div className="gp-mons">
+                      {members.map((s) => (
+                        <PickChip
+                          key={s.id}
+                          species={s.species}
+                          role={m.picks[s.id]}
+                          onBring={() =>
+                            mapMatchup(m.id, (x) => ({
+                              ...x,
+                              picks: toggleBringMap(x.picks, s.id)
+                            }))
+                          }
+                          onLead={() =>
+                            mapMatchup(m.id, (x) => ({
+                              ...x,
+                              picks: toggleLeadMap(x.picks, s.id)
+                            }))
+                          }
+                        />
+                      ))}
                     </div>
-                  )}
+                    {myLeads.length > 0 && (
+                      <div className="gp-lead-summary subtle">
+                        Your leads: {myLeads.map((s) => s.species).join(' + ')}
+                      </div>
+                    )}
+                  </div>
 
                   <textarea
                     className="gp-matchup-notes"
                     placeholder="How this matchup plays out — key threats, sequencing, what to protect / target…"
                     value={m.notes}
-                    onChange={(e) => patchMatchup(m.id, { notes: e.target.value })}
+                    onChange={(e) => mapMatchup(m.id, (x) => ({ ...x, notes: e.target.value }))}
                   />
                 </div>
               )

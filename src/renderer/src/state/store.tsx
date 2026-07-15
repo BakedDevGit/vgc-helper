@@ -35,7 +35,9 @@ export interface SavedTeam {
 export interface Matchup {
   id: string
   label: string
-  picks: Record<string, 'bring' | 'lead'>
+  opponents: string[] // scouted opposing species
+  oppPicks: Record<string, 'bring' | 'lead'> // predicted opponent bring/leads (by species)
+  picks: Record<string, 'bring' | 'lead'> // your bring/leads (by team set.id)
   notes: string
 }
 export interface Gameplan {
