@@ -145,8 +145,9 @@ export interface MoveData {
 // Champions-specific move corrections (mechanics that differ from standard gen 9
 // and aren't in the Showdown data). Keyed by move name.
 const CHAMPIONS_MOVE_OVERRIDES: Record<string, Partial<MoveData>> = {
-  // Champions raised Make It Rain's self Sp. Atk drop from 1 stage to 2.
-  'Make It Rain': { desc: "Lowers the user's Sp. Atk by 2. Hits foe(s)." }
+  // Champions raised Make It Rain's self Sp. Atk drop from 1→2 and dropped its
+  // accuracy from 100 to 95.
+  'Make It Rain': { accuracy: 95, desc: "Lowers the user's Sp. Atk by 2. Hits foe(s)." }
 }
 
 let _moveData: MoveData[] | null = null
@@ -186,6 +187,12 @@ export function listItemData(): ItemData[] {
   return _itemData
 }
 
+// Champions-specific learnset additions (moves a species learns in Champions but
+// not in the standard gen-9 data). Keyed by species name → move names.
+const CHAMPIONS_LEARNSET_ADDITIONS: Record<string, string[]> = {
+  Swampert: ['Wave Crash']
+}
+
 // Move NAMES learnable by a species (walks up the prevo / base-forme chain).
 export async function learnableMoves(speciesName: string): Promise<Set<string>> {
   const out = new Set<string>()
@@ -204,6 +211,13 @@ export async function learnableMoves(speciesName: string): Promise<Set<string>> 
       }
     }
     cur = sp.prevo || (sp.baseSpecies !== sp.name ? sp.baseSpecies : undefined)
+  }
+  // Champions additions for the species and anything in its prevo/base chain.
+  for (const name of seen) {
+    for (const mvName of CHAMPIONS_LEARNSET_ADDITIONS[name] ?? []) {
+      const mv = gen.moves.get(mvName)
+      if (mv?.exists) out.add(mv.name)
+    }
   }
   return out
 }
