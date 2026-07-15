@@ -1,6 +1,6 @@
 import { useStore, useLegalSpeciesNames, type Matchup } from '../state/store'
 import { spriteStyle } from '../data/sprites'
-import { predictMatchup, type Role } from '../data/predict'
+import { predictMatchup, analyzeMatchup, type Role } from '../data/predict'
 import SearchSelect from './SearchSelect'
 
 const genId = (): string => Math.random().toString(36).slice(2, 10)
@@ -62,7 +62,7 @@ function PickChip({
 }
 
 export default function GameplanPlanner(): JSX.Element {
-  const { team, gameplan, setGameplan } = useStore()
+  const { team, gameplan, setGameplan, meta } = useStore()
   const speciesNames = useLegalSpeciesNames()
   const members = team.filter((s) => s.species)
 
@@ -141,6 +141,7 @@ export default function GameplanPlanner(): JSX.Element {
               const oppPicks = m.oppPicks ?? {}
               const myLeads = members.filter((s) => m.picks[s.id] === 'lead')
               const theirBring = opponents.filter((o) => oppPicks[o])
+              const notes = analyzeMatchup(team, opponents, meta)
               return (
                 <div key={m.id} className="gp-card">
                   <div className="gp-card-head">
@@ -213,6 +214,17 @@ export default function GameplanPlanner(): JSX.Element {
                       </>
                     )}
                   </div>
+
+                  {/* Ability interaction watch-outs */}
+                  {notes.length > 0 && (
+                    <div className="gp-warnings">
+                      {notes.map((n, i) => (
+                        <div key={i} className="gp-warn">
+                          ⚠ {n.text}
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Your side */}
                   <div className="gp-section">

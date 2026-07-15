@@ -1467,3 +1467,20 @@ input[type='range'] {
 .gp-remove:hover {
   background: #3a2530;
 }
+
+/* --- Gameplan: ability watch-outs --- */
+.gp-warnings {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gp-warn {
+  background: #2a2210;
+  border: 1px solid #6b5a1f;
+  color: #e9d79a;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  line-height: 1.35;
+}

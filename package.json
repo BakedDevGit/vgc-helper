@@ -1,6 +1,6 @@
 {
   "name": "vgc-helper",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Pokemon VGC teambuilder, stat and damage calculator",
   "main": "./out/main/index.js",
   "author": "Kamran",
