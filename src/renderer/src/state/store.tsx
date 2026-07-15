@@ -6,7 +6,9 @@ import {
   useMemo,
   useRef,
   useState,
-  type ReactNode
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction
 } from 'react'
 import { newSet, type PokeSet } from '../data/champions'
 import { type MetaEntry, type MetaMap, setUserItemFixes } from '../data/meta'
@@ -27,6 +29,21 @@ export interface SavedTeam {
   sets: PokeSet[]
 }
 
+// Gameplan: per-matchup team-preview plan for the current team. `picks` maps a
+// team member's set.id to its role ('bring' = one of the 4 brought; 'lead' = also
+// one of the 2 leads, so leads ⊆ bring).
+export interface Matchup {
+  id: string
+  label: string
+  picks: Record<string, 'bring' | 'lead'>
+  notes: string
+}
+export interface Gameplan {
+  notes: string // overall win conditions / general plan
+  matchups: Matchup[]
+}
+const emptyGameplan = (): Gameplan => ({ notes: '', matchups: [] })
+
 const genId = (): string => Math.random().toString(36).slice(2, 10)
 const clone = <T,>(x: T): T => JSON.parse(JSON.stringify(x))
 
@@ -38,6 +55,7 @@ interface AppState {
   activeFormatId: string
   savedTeams: SavedTeam[]
   itemFixes: Record<string, string>
+  gameplan: Gameplan
   illegal?: string[] // legacy single-list field (migrated to formats)
 }
 
@@ -70,6 +88,8 @@ interface Ctx {
   overwriteSavedTeam: (id: string) => void
   loadSavedTeam: (id: string) => void
   deleteSavedTeam: (id: string) => void
+  gameplan: Gameplan
+  setGameplan: Dispatch<SetStateAction<Gameplan>>
   itemFixes: Record<string, string>
   setItemFix: (raw: string, corrected: string) => void
 }
@@ -84,6 +104,7 @@ export function StoreProvider({ children }: { children: ReactNode }): JSX.Elemen
   const [activeFormatId, setActiveFormatId] = useState('')
   const [savedTeams, setSavedTeams] = useState<SavedTeam[]>([])
   const [itemFixes, setItemFixes] = useState<Record<string, string>>({})
+  const [gameplan, setGameplan] = useState<Gameplan>(emptyGameplan)
   const [ready, setReady] = useState(false)
   const [dataVersion, setDataVersion] = useState(0)
   const loaded = useRef(false)
@@ -115,6 +136,7 @@ export function StoreProvider({ children }: { children: ReactNode }): JSX.Elemen
           : fmts[0].id
       )
       setSavedTeams(s.savedTeams ?? [])
+      setGameplan(s.gameplan ?? emptyGameplan())
       loaded.current = true
       setReady(true)
     }
@@ -132,10 +154,11 @@ export function StoreProvider({ children }: { children: ReactNode }): JSX.Elemen
         formats,
         activeFormatId,
         savedTeams,
-        itemFixes
+        itemFixes,
+        gameplan
       })
     }
-  }, [team, benchmarks, meta, formats, activeFormatId, savedTeams, itemFixes])
+  }, [team, benchmarks, meta, formats, activeFormatId, savedTeams, itemFixes, gameplan])
 
   const setItemFix = useCallback((raw: string, corrected: string) => {
     setItemFixes((prev) => {
@@ -288,6 +311,8 @@ export function StoreProvider({ children }: { children: ReactNode }): JSX.Elemen
         overwriteSavedTeam,
         loadSavedTeam,
         deleteSavedTeam,
+        gameplan,
+        setGameplan,
         itemFixes,
         setItemFix
       }}

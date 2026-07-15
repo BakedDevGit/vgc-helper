@@ -1281,3 +1281,139 @@ input[type='range'] {
 .update-btn:hover {
   background: #377d51;
 }
+
+/* --- Gameplan planner --- */
+.gp-team {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.gp-team-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  background: #171d2e;
+  border: 1px solid #2a3350;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.gp-notes-label {
+  display: block;
+  margin: 16px 0;
+}
+.gp-notes,
+.gp-matchup-notes {
+  width: 100%;
+  min-height: 60px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: #10151f;
+  border: 1px solid #2a3350;
+  border-radius: 8px;
+  color: #dfe6f2;
+  font: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.gp-matchups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.gp-card {
+  background: #141a28;
+  border: 1px solid #26304c;
+  border-radius: 10px;
+  padding: 12px;
+}
+.gp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.gp-label {
+  flex: 1;
+  padding: 6px 10px;
+  background: #10151f;
+  border: 1px solid #2a3350;
+  border-radius: 8px;
+  color: #eaf0fb;
+  font-size: 15px;
+  font-weight: 700;
+}
+.gp-counts {
+  white-space: nowrap;
+  font-size: 12px;
+}
+.gp-del {
+  background: transparent;
+  border: 1px solid #3a2530;
+  color: #d98a9a;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.gp-del:hover {
+  background: #3a2530;
+}
+.gp-mons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.gp-mon {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border: 1px solid #2a3350;
+  border-radius: 8px;
+  overflow: hidden;
+  opacity: 0.5;
+  background: #10151f;
+}
+.gp-mon.picked {
+  opacity: 1;
+  border-color: #3a7d5a;
+  background: #12251b;
+}
+.gp-mon-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 6px;
+  background: transparent;
+  border: none;
+  color: #dfe6f2;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gp-mon-name {
+  font-size: 13px;
+}
+.gp-lead {
+  border: none;
+  border-top: 1px solid #2a3350;
+  background: #0d1420;
+  color: #8fa2c2;
+  font-size: 11px;
+  padding: 3px 0;
+  cursor: pointer;
+}
+.gp-lead.on {
+  background: #b8902f;
+  color: #201603;
+  font-weight: 700;
+}
+.gp-lead-summary {
+  margin-top: 8px;
+  font-size: 13px;
+}
+.gp-matchup-notes {
+  margin-top: 10px;
+}
