@@ -1,5 +1,28 @@
 # Releasing & updates
 
+## Quick data fixes — NO release needed (v0.1.3+)
+
+Move stats (accuracy/power/type/category/pp/priority/description) and extra
+learnset entries are driven by [`champions-overrides.json`](champions-overrides.json)
+in this repo. **Edit that file on GitHub** (pencil icon → commit to `main`) and every
+app — desktop, web, Android — fetches it on next launch. No rebuild, no release.
+
+```json
+{
+  "moveOverrides": {
+    "Make It Rain": { "accuracy": 95, "desc": "Lowers the user's Sp. Atk by 2. Hits foe(s)." }
+  },
+  "learnsetAdditions": { "Swampert": ["Wave Crash"] }
+}
+```
+
+Built-in defaults (in `src/renderer/src/data/championsData.ts`) are the offline
+fallback; the remote file merges on top. Use a full app release (below) only for
+UI/logic changes or new built-in defaults.
+
+---
+
+
 Three build targets share one codebase:
 
 | Target  | Build                | Updates                                   |
